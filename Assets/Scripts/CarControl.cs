@@ -41,7 +41,7 @@ public class CarControl : MonoBehaviour
         float motor = maxMotorTorsion * Input.GetAxis("Vertical");
         float direccion = maxAnguloDeGiro * Input.GetAxis("Horizontal");
 
-        foreach(infoEje ejesInfo in infoEjes)
+        foreach(infoEje ejesInfo in  infoEjes)
         {
             if (ejesInfo.direccion)
             {
