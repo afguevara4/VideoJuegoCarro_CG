@@ -1,17 +1,14 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
-using Unity.MLAgents;
 using Unity.MLAgents.Sensors;
 using Unity.MLAgents.Actuators;
-using Unity.Barracuda;
-using System;
+using Unity.MLAgents;
 
 public class agenteML : Agent
 {
     [SerializeField]
-    private float _fuerzaMovimiento = 200;
+    private float _fuerzaMovimiento = 20000;
 
     [SerializeField]
     private Transform _target;
@@ -21,7 +18,7 @@ public class agenteML : Agent
     public override void Initialize()
     {
         _rb = GetComponent<Rigidbody>();
-        //MaxStep forma parte de la clase Agente
+        //MaxStep forma parte de la clase agent
         if (!_training) MaxStep = 0;
     }
 
@@ -29,39 +26,21 @@ public class agenteML : Agent
     {
         _rb.velocity = Vector3.zero;
         _rb.angularVelocity = Vector3.zero;
-        MoverPosicionInicial();
-    }
-
-    private void MoverPosicionInicial()
-    {
-        bool PosicionEncontrada = false;
-        int intentos = 100;
-        Vector3 posicionPotencial = Vector3.zero;
-        while (!PosicionEncontrada || intentos > 0)
-        {
-            intentos--;
-            posicionPotencial = new Vector3(transform.parent.position.x + UnityEngine.Random.Range(-4f, 4f), 0.555f, transform.parent.position.z + UnityEngine.Random.Range(-4f, 4f));
-            Collider[] colliders = Physics.OverlapSphere(posicionPotencial, 0.05f);
-            if (colliders.Length == 0)
-            {
-                transform.position = posicionPotencial;
-                PosicionEncontrada |= true;
-            }
-        }
+        //MoverPosicionInicial();
     }
 
     public override void OnActionReceived(ActionBuffers actions)
     {
-        //Construir el vector con el vector recibido
+        //Construir el vector en el vector recibido
         Vector3 movimiento = new Vector3(actions.ContinuousActions[0], 0f, actions.ContinuousActions[1]);
         //Sumamos el vector construido al rigidbody como fuerza
         _rb.AddForce(movimiento * _fuerzaMovimiento * Time.deltaTime);
     }
 
-    public override void CollectObservations(VectorSensor sensor) {
-        //Calcular canto nos queda hasta el objetivo
+    public override void CollectObservations(VectorSensor sensor)
+    {
+        //Calcular cuanto nos queda hasta el objetivo
         Vector3 alObjetivo = _target.position - transform.position;
-
         //Un vector ocupa 3 observaciones
         sensor.AddObservation(alObjetivo.normalized);
     }
@@ -87,7 +66,6 @@ public class agenteML : Agent
             }
         }
     }
-
     private void OnTriggerStay(Collider other)
     {
         if (other.CompareTag("target"))
@@ -110,4 +88,21 @@ public class agenteML : Agent
         }
     }
 
+    private void MoverPosicionInicial()
+    {
+        bool PosicionEncontrada = false;
+        int intentos = 100;
+        Vector3 posicionPotencial = Vector3.zero;
+        while (!PosicionEncontrada || intentos > 0)
+        {
+            intentos--;
+            posicionPotencial = new Vector3(transform.parent.position.x + UnityEngine.Random.Range(-4f, 4f), 0.49f, transform.parent.position.z + UnityEngine.Random.Range(-4f, 4f));
+            Collider[] colliders = Physics.OverlapSphere(posicionPotencial, 0.05f);
+            if (colliders.Length == 0)
+            {
+                transform.position = posicionPotencial;
+                PosicionEncontrada |= true;
+            }
+        }
+    }
 }

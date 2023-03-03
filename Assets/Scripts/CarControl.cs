@@ -5,56 +5,70 @@ using UnityEngine;
 
 public class CarControl : MonoBehaviour
 {
-    [System.Serializable]
+    public Rigidbody rb;
 
-    public class infoEje
+    public float forwardAccel = 8f, reverseAccel = 4f, maxSpeed = 50f, turnStrength = 180, gravityForce = 10f, dragOnGround;
+
+    private float speedInput, turnInput;
+
+
+    private float groundRayLenght = .5f;
+    public Transform groundRayPoint;
+
+    public Transform lefFrontWheel, rightFrontWheel;
+    public float maxWheelTurn = 25f;
+
+    private void Start()
     {
-        public WheelCollider ruedaIzquierda;
-        public WheelCollider ruedaDerecha;
-        public bool motor;
-        public bool direccion;
+        rb.transform.parent = null;
     }
 
-    public List<infoEje> infoEjes;
-    public float maxMotorTorsion;
-    public float maxAnguloDeGiro;
-
-    void  posRuedas(WheelCollider collider)
+    private void Update()
     {
-        if(collider.transform.childCount == 0)
+        speedInput = 0f;
+        if (Input.GetAxis("Vertical") > 0)
         {
-            return;
+            speedInput = Input.GetAxis("Vertical") * forwardAccel * 100f;
+        }
+        else if (Input.GetAxis("Vertical") < 0)
+        {
+            speedInput = Input.GetAxis("Vertical") * reverseAccel * 100f;
         }
 
-        Transform ruedaVisual = collider.transform.GetChild(0);
+        turnInput = Input.GetAxis("Horizontal");
 
-        Vector3 posicion;
-        Quaternion rotacion;
-        collider.GetWorldPose(out posicion, out rotacion);
+        transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles + new Vector3(0f, turnInput * turnStrength * Time.deltaTime * Input.GetAxis("Vertical"), 0f));
 
-        ruedaVisual.transform.position = posicion;
-        ruedaVisual.transform.rotation = rotacion;
+
+        lefFrontWheel.localRotation = Quaternion.Euler(lefFrontWheel.localRotation.eulerAngles.x, (turnInput * maxWheelTurn) - 180, lefFrontWheel.localRotation.eulerAngles.z);
+
+        rightFrontWheel.localRotation = Quaternion.Euler(rightFrontWheel.localRotation.eulerAngles.x, turnInput * maxWheelTurn, rightFrontWheel.localRotation.eulerAngles.z);
+
+        transform.position = rb.transform.position;
     }
 
     private void FixedUpdate()
     {
-        float motor = maxMotorTorsion * Input.GetAxis("Vertical");
-        float direccion = maxAnguloDeGiro * Input.GetAxis("Horizontal");
+        //grounded = false;
+        RaycastHit hit;
 
-        foreach(infoEje ejesInfo in  infoEjes)
+        if (Physics.Raycast(groundRayPoint.position, -transform.up, out hit, groundRayLenght))
         {
-            if (ejesInfo.direccion)
-            {
-                ejesInfo.ruedaIzquierda.steerAngle = direccion;
-                ejesInfo.ruedaDerecha.steerAngle = direccion;
-            }
-            if (ejesInfo.motor)
-            {
-                ejesInfo.ruedaIzquierda.motorTorque = motor;
-                ejesInfo.ruedaDerecha.motorTorque = motor;
-            }
-            posRuedas(ejesInfo.ruedaIzquierda);
-            posRuedas(ejesInfo.ruedaDerecha);
+
+            transform.rotation = Quaternion.FromToRotation(transform.up, hit.normal) * transform.rotation;
         }
+
+        rb.drag = dragOnGround;
+        if (Mathf.Abs(speedInput) > 0)
+        {
+            rb.AddForce(transform.forward * speedInput);
+        }
+
+        else
+        {
+            rb.drag = 0.1f;
+            rb.AddForce(Vector3.up * -gravityForce * 100f);
+        }
+
     }
 }
